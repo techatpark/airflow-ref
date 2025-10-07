@@ -1,65 +1,106 @@
-# Apache Airflow with Docker Compose
+# Apache Airflow - Single Instance Setup (Docker Compose)
 
-This repository provides a simple shell script to set up and run **Apache Airflow** using **Docker Compose**.  
-It downloads the official `docker-compose.yaml` from the Airflow project, prepares the environment, and starts all services.
+This project provides a minimal **single-instance Apache Airflow setup** using Docker Compose.  
+It’s ideal for learning, experimentation, and small-scale DAG testing — running both the **webserver** and **scheduler** in the same container with a local `dags/` folder.
 
-## Prerequisites
+## 🏗️ Project Structure
 
-- **Docker** and **Docker Compose** installed
-- At least **4 GB RAM** allocated to Docker
+```
+airflow-ref/
+├── docker-compose.yml
+└── dags/
+└── example_dag.py
 
-## Usage
+```
 
-### 1. Setup and Run Airflow
+- `docker-compose.yml` – Defines a single Airflow container (webserver + scheduler).
+- `dags/` – Place your DAG Python files here.
+- `example_dag.py` – Sample DAG included to verify the setup.
+
+## Getting Started
+
+### 1. Prerequisites
+
+Make sure you have the following installed:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+### 2. Start Airflow
+
+From the project root directory, run:
 
 ```bash
-chmod +x setup_airflow.sh
-AIRFLOW_VERSION=3.1.0 ./setup_airflow.sh
+docker compose up
 ```
 
 This will:
 
-- Download the official `docker-compose.yaml` for the given Airflow version
-- Create required folders: `dags/`, `logs/`, `plugins/`
-- Initialize the Airflow database
-- Start all services in the background
+- Initialize the Airflow database (SQLite)
+- Start both the webserver and scheduler
 
-### 2. Access the Airflow UI
+Once started, open your browser and visit:
 
-Once started, open:
-
-👉 [http://localhost:8080](http://localhost:8080)
-
-Default credentials:
-
-- **Username:** `airflow`
-- **Password:** `airflow`
-
-### 3. Stop and Clean Up
-
-To stop all containers, remove volumes, and delete generated files:
-
-```bash
-./setup_airflow.sh clean
+```
+http://localhost:8080
 ```
 
-This will remove:
+**Login credentials:**
 
-- Containers, networks, and volumes
-- Folders: `dags/`, `logs/`, `plugins/`
-- Files: `.env`, `docker-compose.yaml`
+- Username: `admin`
+- Password: `admin`
 
-## Notes
+## 📁 Adding Your Own DAGs
 
-- Change `AIRFLOW_VERSION` to any [supported release](https://airflow.apache.org/docs/) (e.g., `3.1.0`, `2.8.4`).
-- Ensure you re-run the setup script after cleaning if you want to start fresh.
+Simply place your DAG Python files inside the `dags/` folder.
+Airflow automatically detects and loads them.
 
-## Example
+Example:
 
 ```bash
-# Setup Airflow 3.1.0
-AIRFLOW_VERSION=3.1.0 ./setup_airflow.sh
-
-# Clean everything
-./setup_airflow.sh clean
+airflow/dags/my_first_dag.py
 ```
+
+---
+
+## 🧩 Example DAG
+
+The included example DAG runs a simple Bash command daily:
+
+```python
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+    dag_id="example_dag",
+    start_date=datetime(2024, 1, 1),
+    schedule_interval="@daily",
+    catchup=False,
+) as dag:
+    hello = BashOperator(
+        task_id="say_hello",
+        bash_command="echo 'Hello from Airflow!'"
+    )
+```
+
+---
+
+## 🧹 Stopping and Cleaning Up
+
+To stop the container:
+
+```bash
+docker compose down
+```
+
+To remove volumes and reset Airflow:
+
+```bash
+docker compose down -v
+```
+
+## 🧠 Notes
+
+- This setup is intended **only for local development and testing**.
+- For production or multi-user environments, use the [official Airflow docker-compose.yaml](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) with a PostgreSQL and Redis setup.
