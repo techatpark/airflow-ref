@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   postgres:
     image: postgres:13
@@ -24,7 +24,7 @@ services:
     ports:
       - "8080:8080"
     command: >
-      bash -c "airflow db init && airflow users create --username admin --firstname Nexa --lastname Admin --role Admin --email admin@example.com --password admin && airflow scheduler & airflow webserver"
+      bash -c "airflow db migrate && airflow users create --username admin --firstname Nexa --lastname Admin --role Admin --email admin@example.com --password admin && airflow scheduler & airflow webserver"
 
 volumes:
   postgres_data:
