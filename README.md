@@ -3,19 +3,17 @@
 This project provides a minimal **single-instance Apache Airflow setup** using Docker Compose.  
 It’s ideal for learning, experimentation, and small-scale DAG testing — running both the **webserver** and **scheduler** in the same container with a local `dags/` folder.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 airflow-ref/
 ├── docker-compose.yml
 └── dags/
-└── example_dag.py
 
 ```
 
 - `docker-compose.yml` – Defines a single Airflow container (webserver + scheduler).
 - `dags/` – Place your DAG Python files here.
-- `example_dag.py` – Sample DAG included to verify the setup.
 
 ## Getting Started
 
@@ -36,7 +34,7 @@ docker compose up
 
 This will:
 
-- Initialize the Airflow database (SQLite)
+- Initialize the Airflow database (Postgress)
 - Start both the webserver and scheduler
 
 Once started, open your browser and visit:
@@ -50,7 +48,7 @@ http://localhost:8080
 - Username: `admin`
 - Password: `admin`
 
-## 🧠 Notes
+## Notes
 
 - This setup is intended **only for local development and testing**.
 - For production or multi-user environments, use the [official Airflow docker-compose.yaml](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) with a PostgreSQL and Redis setup.
