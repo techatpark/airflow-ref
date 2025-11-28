@@ -3,7 +3,7 @@ from airflow.decorators import task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.models import Variable
 from datetime import datetime, timedelta
-import requests
+from client.github import GithubClient  
 
 default_args = {
     "owner": "airflow",
@@ -22,36 +22,17 @@ with DAG(
 ) as dag:
 
     @task()
-    def fetch_github_repos():
+    def fetch_github_repos_task():
         username = Variable.get("GITHUB_USERNAME")
         token = Variable.get("GITHUB_TOKEN", default_var=None)
-        headers = {"Authorization": f"token {token}"} if token else {}
-        rows = []
-        page = 1
-        while True:
-            url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}"
-            resp = requests.get(url, headers=headers)
-            if resp.status_code != 200:
-                raise Exception(f"GitHub API error {resp.status_code}: {resp.text}")
-            data = resp.json()
-            if not data:
-                break
-            for r in data:
-                rows.append((
-                    r["name"],
-                    r["full_name"],
-                    r["html_url"],
-                    r.get("description"),
-                    r.get("language"),
-                    r.get("created_at"),
-                    r.get("updated_at"),
-                ))
-            page += 1
-        return rows
+
+        github = GithubClient(username, token)
+        return github.fetch_github_repos()
 
     @task()
     def write_to_postgres(repo_rows):
         hook = PostgresHook(postgres_conn_id="github_postgres")
+
         create_sql = """
         CREATE TABLE IF NOT EXISTS github_repos (
             id SERIAL PRIMARY KEY,
@@ -78,13 +59,15 @@ with DAG(
           created_at = EXCLUDED.created_at,
           updated_at = EXCLUDED.updated_at;
         """
+
         conn = hook.get_conn()
         cur = conn.cursor()
+
         for row in repo_rows:
             cur.execute(upsert_sql, row)
+
         conn.commit()
         cur.close()
         conn.close()
-
-    repos = fetch_github_repos()
+    repos = fetch_github_repos_task()
     write_to_postgres(repos)
